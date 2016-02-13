@@ -22,23 +22,28 @@
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="app.css" />
+    <Content Include="css\app.css" />
     <Content Include="assets\tileset.png" />
+    <Content Include="favicon.ico" />
     <Content Include="index.html" />
-    <Content Include="phaser-plugin-isometric.js" />
-    <Content Include="phaser-plugin-isometric.min.js" />
+    <Content Include="Scripts\phaser-plugin-isometric.js" />
+    <Content Include="Scripts\phaser-plugin-isometric.min.js" />
+    <Content Include="Scripts\stomp.js" />
+    <Content Include="Scripts\stomp.min.js" />
     <Content Include="tile.png" />
-    <Content Include="phaser.js" />
-    <Content Include="phaser.min.js" />
+    <Content Include="Scripts\phaser.js" />
+    <Content Include="Scripts\phaser.min.js" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="app.ts" />
-    <TypeScriptCompile Include="p2.d.ts" />
-    <TypeScriptCompile Include="phaser.comments.d.ts" />
-    <TypeScriptCompile Include="phaser.plugin.isometric.d.ts" />
-    <TypeScriptCompile Include="pixi.comments.d.ts" />
+    <TypeScriptCompile Include="src\app.ts" />
+    <TypeScriptCompile Include="Scripts\typings\p2.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\phaser.comments.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\phaser.plugin.isometric.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\pixi.comments.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\sockjs\sockjs.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\stomp\stomp-websocket.d.ts" />
+    <TypeScriptCompile Include="src\networkManager.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\tileset.json" />
@@ -78,6 +83,17 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
+    <TypeScriptTarget>ES5</TypeScriptTarget>
+    <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
+    <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
+    <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+    <TypeScriptModuleKind>None</TypeScriptModuleKind>
+    <TypeScriptOutFile />
+    <TypeScriptOutDir />
+    <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+    <TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
+    <TypeScriptMapRoot />
+    <TypeScriptSourceRoot />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TypeScriptRemoveComments>true</TypeScriptRemoveComments>
