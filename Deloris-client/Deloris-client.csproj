@@ -36,6 +36,8 @@
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="Scripts\typings\bootstrap-dialog\bootstrap-dialog.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
     <TypeScriptCompile Include="src\app.ts" />
     <TypeScriptCompile Include="Scripts\typings\p2.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\phaser.comments.d.ts" />
@@ -44,6 +46,7 @@
     <TypeScriptCompile Include="Scripts\typings\sockjs\sockjs.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\stomp\stomp-websocket.d.ts" />
     <TypeScriptCompile Include="src\networkManager.ts" />
+    <TypeScriptCompile Include="src\scene.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\tileset.json" />

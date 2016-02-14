@@ -15,11 +15,45 @@ var NetworkManager = (function () {
                 var parsedPlayers = JSON.parse(players.body);
                 scene.updatePlayers(parsedPlayers);
             });
-            _this.stompClient.send("/app/get-players", {});
+            var subscription = _this.stompClient.subscribe('/topic/registering-player', function (player) {
+                var parsedPlayer = JSON.parse(player.body);
+                scene.setCurrentPlayer(parsedPlayer);
+                _this.stompClient.send("/app/get-players", {});
+                _this.runSendMoveLoop(scene);
+                subscription.unsubscribe();
+            });
+            if (_this.actionOnConnection != null)
+                _this.actionOnConnection();
         });
+        window.onbeforeunload = function () { return _this.disconnect(); };
     }
-    NetworkManager.prototype.sendMove = function (id, x, y) {
-        this.stompClient.send("/app/move-player", {}, JSON.stringify({ "id": id, 'newX': x, "newY": y }));
+    NetworkManager.prototype.sendMove = function (token, x, y) {
+        this.stompClient.send("/app/move-player", {}, JSON.stringify({ "token": token, 'newX': x, "newY": y }));
+    };
+    NetworkManager.prototype.registerPlayer = function (name) {
+        this.stompClient.send("/app/register-player", {}, JSON.stringify(name));
+    };
+    NetworkManager.prototype.runSendMoveLoop = function (scene) {
+        var _this = this;
+        var prevPosX = -1;
+        var prevPosY = -1;
+        window.setInterval(function () {
+            var curX = Math.floor(scene.curPlayer.tile.body.x);
+            var curY = Math.floor(scene.curPlayer.tile.body.y);
+            var needSend = false;
+            if (prevPosX !== curX) {
+                needSend = true;
+                prevPosX = curX;
+            }
+            if (prevPosY !== curY) {
+                needSend = true;
+                prevPosY = curY;
+            }
+            if (needSend)
+                _this.sendMove(scene.curPlayer.token, curX, curY);
+        }, 100);
+    };
+    NetworkManager.prototype.disconnect = function () {
     };
     return NetworkManager;
 })();
