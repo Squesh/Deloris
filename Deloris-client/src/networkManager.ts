@@ -1,6 +1,6 @@
 ﻿class NetworkManager {
     constructor(scene: Scene) {
-        console.log(scene);
+        this.scene = scene;
         this.socket = new SockJS(this.url);
         this.stompClient = Stomp.over(this.socket);
         this.stompClient.connect({}, frame => {
@@ -32,15 +32,16 @@
 
     socket: SockJS;
     stompClient: StompClient;
+    scene: Scene;
     
     url = "https://deloris.herokuapp.com/entry";
 
     sendMove(token: string, x: number, y: number) {
-        this.stompClient.send("/app/move-player", {}, JSON.stringify({ "token": token, 'newX': x, "newY": y }));
+        this.stompClient.send("/app/move-hero", {}, JSON.stringify({ "token": token, 'newX': x, "newY": y }));
     }
 
     registerPlayer(name: string) {
-        this.stompClient.send("/app/register-player", {}, JSON.stringify(name));
+        this.stompClient.send("/app/register-hero", {}, JSON.stringify(name));
     }
 
     actionOnConnection: () => void;
@@ -49,8 +50,8 @@
         var prevPosX = -1;
         var prevPosY = -1;
         window.setInterval(() => {
-            var curX = Math.floor(scene.curPlayer.tile.body.x);
-            var curY = Math.floor(scene.curPlayer.tile.body.y);
+            var curX = Math.floor(scene.curPlayer.hero.tile.body.x);
+            var curY = Math.floor(scene.curPlayer.hero.tile.body.y);
             var needSend = false;
             if (prevPosX !== curX) {
                 needSend = true;
@@ -67,6 +68,7 @@
     }
 
     disconnect() {
-        
+        var token = this.scene.curPlayer.token;
+        this.stompClient.send("/app/unregister-hero", {}, JSON.stringify(token));
     }
 }

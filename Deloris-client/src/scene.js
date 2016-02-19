@@ -110,14 +110,14 @@ var Scene = (function () {
             if (player.token !== _this.curPlayer.token) {
                 var tPlayer = _this.players.filter(function (p) { return p.token === player.token; })[0];
                 if (tPlayer)
-                    tPlayer.move(player.x, player.y);
+                    tPlayer.hero.move(player.x, player.y);
             }
         });
     };
     Scene.prototype.handleInput = function () {
         if (!this.curPlayer)
             return;
-        var body = this.curPlayer.tile.body;
+        var body = this.curPlayer.hero.tile.body;
         var speedPxPerSec = 2 * 32;
         var isLeft = this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT);
         var isRight = this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT);
@@ -154,16 +154,24 @@ var Player = (function () {
     function Player(iso, isoGroup, player) {
         this.token = player.token;
         this.name = player.name;
-        this.x = player.x;
-        this.y = player.y;
+        this.isoGroup = isoGroup; // todo: drawer responsibility, not player
+        this.hero = new Hero(iso, isoGroup);
+    }
+    Player.prototype.removeHero = function () {
+        this.isoGroup.remove(this.hero.tile, true);
+    };
+    return Player;
+})();
+var Hero = (function () {
+    function Hero(iso, isoGroup) {
         this.tile = iso.addIsoSprite(this.x, this.y, 0, 'tileset', "mushroom", isoGroup);
         this.tile.anchor.set(0.5, 1);
         this.tile.body.collideWorldBounds = true;
     }
-    Player.prototype.move = function (x, y) {
+    Hero.prototype.move = function (x, y) {
         this.tile.isoX = x;
         this.tile.isoY = y;
     };
-    return Player;
+    return Hero;
 })();
 //# sourceMappingURL=scene.js.map

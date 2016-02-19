@@ -2,7 +2,7 @@ var NetworkManager = (function () {
     function NetworkManager(scene) {
         var _this = this;
         this.url = "https://deloris.herokuapp.com/entry";
-        console.log(scene);
+        this.scene = scene;
         this.socket = new SockJS(this.url);
         this.stompClient = Stomp.over(this.socket);
         this.stompClient.connect({}, function (frame) {
@@ -28,18 +28,18 @@ var NetworkManager = (function () {
         window.onbeforeunload = function () { return _this.disconnect(); };
     }
     NetworkManager.prototype.sendMove = function (token, x, y) {
-        this.stompClient.send("/app/move-player", {}, JSON.stringify({ "token": token, 'newX': x, "newY": y }));
+        this.stompClient.send("/app/move-hero", {}, JSON.stringify({ "token": token, 'newX': x, "newY": y }));
     };
     NetworkManager.prototype.registerPlayer = function (name) {
-        this.stompClient.send("/app/register-player", {}, JSON.stringify(name));
+        this.stompClient.send("/app/register-hero", {}, JSON.stringify(name));
     };
     NetworkManager.prototype.runSendMoveLoop = function (scene) {
         var _this = this;
         var prevPosX = -1;
         var prevPosY = -1;
         window.setInterval(function () {
-            var curX = Math.floor(scene.curPlayer.tile.body.x);
-            var curY = Math.floor(scene.curPlayer.tile.body.y);
+            var curX = Math.floor(scene.curPlayer.hero.tile.body.x);
+            var curY = Math.floor(scene.curPlayer.hero.tile.body.y);
             var needSend = false;
             if (prevPosX !== curX) {
                 needSend = true;
@@ -54,6 +54,8 @@ var NetworkManager = (function () {
         }, 100);
     };
     NetworkManager.prototype.disconnect = function () {
+        var token = this.scene.curPlayer.token;
+        this.stompClient.send("/app/unregister-hero", {}, JSON.stringify(token));
     };
     return NetworkManager;
 })();

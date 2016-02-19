@@ -130,14 +130,14 @@
         players.forEach(player => {
             if (player.token !== this.curPlayer.token) {
                 var tPlayer = this.players.filter(p => p.token === player.token)[0];
-                if (tPlayer) tPlayer.move(player.x, player.y);
+                if (tPlayer) tPlayer.hero.move(player.x, player.y);
             }
         });
     }
 
     handleInput() {
         if (!this.curPlayer) return;
-        var body = this.curPlayer.tile.body;
+        var body = this.curPlayer.hero.tile.body;
 
         var speedPxPerSec = 2 * 32;
         var isLeft = this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT);
@@ -176,17 +176,28 @@
 class Player {
     token: string;
     name: string;
-    x: number;
-    y: number;
-
-    tile: Phaser.Plugin.Isometric.IsoSprite;
+    hero: Hero;
+    isoGroup: Phaser.Group;
 
     constructor(iso: Phaser.Plugin.Isometric, isoGroup: Phaser.Group, player: any) {
         this.token = player.token;
         this.name = player.name;
-        this.x = player.x;
-        this.y = player.y;
+        this.isoGroup = isoGroup; // todo: drawer responsibility, not player
 
+        this.hero = new Hero(iso, isoGroup);
+    }
+
+    removeHero() {
+        this.isoGroup.remove(this.hero.tile, true);
+    }
+}
+
+class Hero {
+    x: number;
+    y: number;
+    tile: Phaser.Plugin.Isometric.IsoSprite;
+
+    constructor(iso: Phaser.Plugin.Isometric, isoGroup: Phaser.Group) {
         this.tile = <Phaser.Plugin.Isometric.IsoSprite>iso.addIsoSprite(this.x, this.y, 0, 'tileset', "mushroom", isoGroup);
         this.tile.anchor.set(0.5, 1);
         this.tile.body.collideWorldBounds = true;
