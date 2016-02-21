@@ -64,13 +64,13 @@ declare module Phaser.Plugin {
             copyFrom(source: any): Phaser.Plugin.Isometric.Point3;
             copyto(dest: any): any;
             equals(a: any): boolean;
+            containsXY(x: number, y: number): boolean;
             set(x?: number, y?: number, z?: number): Phaser.Plugin.Isometric.Point3;
             setTo(x?: number, y?: number, z?: number): Phaser.Plugin.Isometric.Point3;
             add(x?: number, y?: number): Phaser.Plugin.Isometric.Point3;
             subtract(x?: number, y?: number, z?: number): Phaser.Plugin.Isometric.Point3;
             multiply(x?: number, y?: number, z?: number): Phaser.Plugin.Isometric.Point3;
             divide(x?: number, y?: number, z?: number): Phaser.Plugin.Isometric.Point3;
-
         }
 
         class Octree {

@@ -6,21 +6,20 @@
         this.stompClient.connect({}, frame => {
             console.log('Connected: ' + frame);
 
-            this.stompClient.subscribe('/topic/init-players', players => {
+            this.stompClient.subscribe('/topic/init-heroes', players => {
                 var parsedPlayers = JSON.parse(players.body);
                 scene.addPlayers(parsedPlayers);
             });
 
-            this.stompClient.subscribe('/topic/players', players => {
+            this.stompClient.subscribe('/topic/heroes', players => {
                 var parsedPlayers = JSON.parse(players.body);
                 scene.updatePlayers(parsedPlayers);
             });
 
-            var subscription = this.stompClient.subscribe('/topic/registering-player', player => {
+            var subscription = this.stompClient.subscribe('/topic/registering-hero', player => {
                 var parsedPlayer = JSON.parse(player.body);
                 scene.setCurrentPlayer(parsedPlayer);
-                this.stompClient.send("/app/get-players", {});
-                this.runSendMoveLoop(scene);
+                this.stompClient.send("/app/get-heroes", {});
                 subscription.unsubscribe();
             });
 
@@ -36,7 +35,7 @@
     
     url = "https://deloris.herokuapp.com/entry";
 
-    sendMove(token: string, x: number, y: number) {
+    private sendMove(token: string, x: number, y: number) {
         this.stompClient.send("/app/move-hero", {}, JSON.stringify({ "token": token, 'newX': x, "newY": y }));
     }
 
@@ -46,25 +45,8 @@
 
     actionOnConnection: () => void;
 
-    runSendMoveLoop(scene: Scene) {
-        var prevPosX = -1;
-        var prevPosY = -1;
-        window.setInterval(() => {
-            var curX = Math.floor(scene.curPlayer.hero.tile.body.x);
-            var curY = Math.floor(scene.curPlayer.hero.tile.body.y);
-            var needSend = false;
-            if (prevPosX !== curX) {
-                needSend = true;
-                prevPosX = curX;
-            }
-
-            if (prevPosY !== curY) {
-                needSend = true;
-                prevPosY = curY;
-            }
-
-            if (needSend) this.sendMove(scene.curPlayer.token, curX, curY);
-        }, 100);
+    sendHeroMove(player: Player, position: Phaser.Point) {
+        this.sendMove(player.token, position.x, position.y);
     }
 
     disconnect() {

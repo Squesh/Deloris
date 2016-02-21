@@ -1,87 +1,46 @@
 ﻿class Scene {
-    game: Phaser.Game;
-    isoArcade: Phaser.Plugin.Isometric.Arcade;
-    water: Phaser.Plugin.Isometric.IsoSprite[];
     isoGroup: Phaser.Group;
+    sortGroup: Phaser.Group;
+
     players: Player[];
-    iso: Phaser.Plugin.Isometric;
     network: NetworkManager;
     playerIndex: number;
     curPlayer: Player;
 
-    constructor(game: Phaser.Game) {
-        this.game = game;
-    }
+    cursorPosition: Phaser.Plugin.Isometric.Point3;
+    map: Map;
 
     createScene() {
-        this.isoGroup = this.game.add.group();
+        this.isoGroup = SimpleGame.game.add.group();
+        this.sortGroup = SimpleGame.game.add.group();
 
         this.isoGroup.enableBody = true;
-        this.isoGroup.physicsBodyType = Phaser.Plugin.Isometric.ISOARCADE;
+        //this.isoGroup.physicsBodyType = Phaser.Plugin.Isometric.ISOARCADE;
+        this.cursorPosition = new Phaser.Plugin.Isometric.Point3();
 
-        var tileArray = [];
-        tileArray[0] = 'water';
-        tileArray[1] = 'sand';
-        tileArray[2] = 'grass';
-        tileArray[3] = 'stone';
-        tileArray[4] = 'wood';
-        tileArray[5] = 'watersand';
-        tileArray[6] = 'grasssand';
-        tileArray[7] = 'sandstone';
-        tileArray[8] = 'bush1';
-        tileArray[9] = 'bush2';
-        tileArray[10] = 'mushroom';
-        tileArray[11] = 'wall';
-        tileArray[12] = 'window';
+        //SimpleGame.resizeToMapSize(512, 512);
 
-        var tiles = [
-            9, 2, 1, 1, 4, 4, 1, 6, 2, 10, 2,
-            2, 6, 1, 0, 4, 4, 0, 0, 2, 2, 2,
-            6, 1, 0, 0, 4, 4, 0, 0, 8, 8, 2,
-            0, 0, 0, 0, 4, 4, 0, 0, 0, 9, 2,
-            0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0,
-            11, 11, 12, 11, 3, 3, 11, 12, 11, 11, 11,
-            3, 7, 3, 3, 3, 3, 3, 3, 7, 3, 3,
-            7, 1, 7, 7, 3, 3, 7, 7, 1, 1, 7
-        ];
-
-        var mapSize = { x: 11, y: 11 };
-
-        var i = 0;
-        this.water = [];
-        var tile: Phaser.Plugin.Isometric.IsoSprite;
-
-        var size = 32;
-        var centerX = this.isoArcade.bounds.centerX;
-        var centerY = this.isoArcade.bounds.centerY;
-        //var startX = centerX - (mapSize.x * size / 2.0);
-        //var startY = centerY - (mapSize.y * size / 2.0);
-        var startX = 0;
-        var startY = 0;
-        var curX = startX, curY = startY;
-
-        for (var y = 0; y < mapSize.y; y ++) {
-            for (var x = 0; x < mapSize.x; x ++) {
-                tile = <Phaser.Plugin.Isometric.IsoSprite>this.iso.addIsoSprite(curX, curY, 0, 'tileset', tileArray[tiles[i]], this.isoGroup);
-                tile.anchor.set(0.5, 1);
-                tile.smoothed = false;
-                tile.body.moves = false;
-                if (tiles[i] === 0) this.water.push(tile);
-
-                curX += size;
-                i++;
+        var tiles = [];
+        var mapSize = { width: 16, height: 16 };
+        for (var i = 0; i < mapSize.width; i++) {
+            tiles[i] = [];
+            for (var j = 0; j < mapSize.height; j++) {
+                tiles[i][j] = (Math.sin(Math.pow(i + j * Math.tan(4), 2))*Math.tan(i*j*126)) % 3 > 0 ? 0 : 1;
             }
-            curX = startX;
-            curY += size;
         }
 
+        this.map = new Map(tiles);
+        this.map.drawMap();
+
         this.runNetwork();
+
+        SimpleGame.game.input.onDown.add(this.onLeftMouseClick, this);
     }
 
     runNetwork() {
+        //this.network = new NetworkManager(this);
+        //this.network.actionOnConnection = () => this.network.registerPlayer("Test");
+        //return;
 
         var options = <IBootstrapDialogOptions>{};
         options.title = "Enter your name";
@@ -107,20 +66,13 @@
         BootstrapDialog.show(options);
     }
 
-    updateWater() {
-        this.water.forEach(w => {
-            w.isoZ = (-2 * Math.sin((this.game.time.now + (w.isoX * 7)) * 0.004)) + (-1 * Math.sin((this.game.time.now + (w.isoY * 8)) * 0.005));
-            w.alpha = Phaser.Math.clamp(1 + (w.isoZ * 0.1), 0.2, 1);
-        });
-    }
-
     addPlayers(players: any) {
         if (!this.players) this.players = [];
 
         players.forEach(player => {
             var tPlayer = this.players.filter(p => p.token === player.token)[0];
             if (!tPlayer) {
-                var newPlayer = new Player(this.iso, this.isoGroup, player);
+                var newPlayer = new Player(this.isoGroup, this.sortGroup, player);
                 this.players.push(newPlayer);
             }
         });
@@ -130,45 +82,35 @@
         players.forEach(player => {
             if (player.token !== this.curPlayer.token) {
                 var tPlayer = this.players.filter(p => p.token === player.token)[0];
-                if (tPlayer) tPlayer.hero.move(player.x, player.y);
+                if (tPlayer) tPlayer.hero.move(this.map.cellAt(player.x, player.y));
             }
         });
     }
 
-    handleInput() {
-        if (!this.curPlayer) return;
-        var body = this.curPlayer.hero.tile.body;
+    update() {
+        this.handleMouse();
+        
+        //this.isoGroup.forEach(tile => {
+        //    SimpleGame.game.debug.body(tile, 'rgba(189, 221, 235, 0.6)', false);
+        //}, this);
+    }
 
-        var speedPxPerSec = 2 * 32;
-        var isLeft = this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT);
-        var isRight = this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT);
-        var isTop = this.game.input.keyboard.isDown(Phaser.Keyboard.UP);
-        var isBottom = this.game.input.keyboard.isDown(Phaser.Keyboard.DOWN);
+    private handleMouse() {
+        SimpleGame.iso.projector.unproject(SimpleGame.game.input.activePointer.position, this.cursorPosition);
+    }
 
-        if (isLeft && isRight || (!isLeft && !isRight)) {
-            body.velocity.x = 0;
-        }
-
-        if (isLeft) {
-            body.velocity.x = -speedPxPerSec;
-        } else if (isRight) {
-            body.velocity.x = speedPxPerSec;
-        }
-
-        if (isTop && isBottom || (!isTop && !isBottom)) {
-            body.velocity.y = 0;
-        }
-
-        if (isTop) {
-            body.velocity.y = -speedPxPerSec;
-        } else if (isBottom) {
-            body.velocity.y = speedPxPerSec;
+    onLeftMouseClick() {
+        var mapCellOverMouse = this.map.cellsAtScreenCoords(this.cursorPosition.x, this.cursorPosition.y);
+        if (mapCellOverMouse) {
+            if (this.curPlayer.hero.move(mapCellOverMouse)) {
+                this.network.sendHeroMove(this.curPlayer, mapCellOverMouse.pos);
+            }
         }
     }
 
     setCurrentPlayer(parsedPlayer) {
         if (!this.players) this.players = [];
-        this.curPlayer = new Player(this.iso, this.isoGroup, parsedPlayer);
+        this.curPlayer = new Player(this.isoGroup, this.sortGroup, parsedPlayer);
         this.players.push(this.curPlayer);
     }
 }
@@ -177,34 +119,210 @@ class Player {
     token: string;
     name: string;
     hero: Hero;
-    isoGroup: Phaser.Group;
 
-    constructor(iso: Phaser.Plugin.Isometric, isoGroup: Phaser.Group, player: any) {
+    private isoGroup: Phaser.Group;
+    private sortGroup: Phaser.Group;
+
+    constructor(isoGroup: Phaser.Group, sortGroup: Phaser.Group, player: any) {
         this.token = player.token;
         this.name = player.name;
         this.isoGroup = isoGroup; // todo: drawer responsibility, not player
 
-        this.hero = new Hero(iso, isoGroup);
+        this.hero = new Hero(isoGroup, SimpleGame.scene.map.cellAt(player.x, player.y));
+        sortGroup.add(this.hero.drawable.sprite);
     }
 
     removeHero() {
-        this.isoGroup.remove(this.hero.tile, true);
+        this.isoGroup.remove(this.hero.drawable.sprite, true);
+        this.sortGroup.remove(this.hero.drawable.sprite, true);
     }
 }
 
 class Hero {
-    x: number;
-    y: number;
-    tile: Phaser.Plugin.Isometric.IsoSprite;
+    drawable: DrawableObject;
+    onCell: MapCell;
+    isWalking: boolean;
+    speed = 350; // px per second
+    walkAnimation: Phaser.Animation;
+    private lastWalkTween: Phaser.Tween;
 
-    constructor(iso: Phaser.Plugin.Isometric, isoGroup: Phaser.Group) {
-        this.tile = <Phaser.Plugin.Isometric.IsoSprite>iso.addIsoSprite(this.x, this.y, 0, 'tileset', "mushroom", isoGroup);
-        this.tile.anchor.set(0.5, 1);
-        this.tile.body.collideWorldBounds = true;
+    constructor(isoGroup: Phaser.Group, onCell: MapCell) {
+        if (!onCell) onCell = SimpleGame.scene.map.cellAt(0, 0);
+        this.drawable = new DrawableObject(onCell.pos.x, onCell.pos.y, null, isoGroup, true, "peoples");
+        this.drawable.sprite.resetFrame();
+        this.walkAnimation = this.drawable.sprite.animations.add('walk');
+        this.drawable.sprite.anchor.set(0.5, 0.5);
+
+        this.onCell = onCell;
+        //this.object.sprite.body.collideWorldBounds = true;
     }
 
-    move(x: number, y: number) {
-        this.tile.isoX = x;
-        this.tile.isoY = y;
+    move(cell: MapCell): boolean {
+        if (!cell || cell.isWall || this.onCell === cell) return false;
+
+        var path = SimpleGame.scene.map.getPathToCellFromPoint(this.drawable.getScreenPos(), cell);
+        if (!path || path.length === 0) return false;
+
+        if (this.lastWalkTween) {
+            SimpleGame.game.tweens.remove(this.lastWalkTween);
+        }
+
+        this.isWalking = true;
+        this.walkAnimation.play(10, true);
+        var curPos: Phaser.Point;
+        var prevPos = this.drawable.getScreenPos();
+
+        var tween = SimpleGame.game.add.tween(this.drawable.sprite);
+        for (var i = 0; i < path.length; i++) {
+            var targetCell = SimpleGame.scene.map.cellAt(path[i].pos.x, path[i].pos.y);
+            curPos = targetCell.drawable.getScreenPos();
+            var timeForMove = Phaser.Point.distance(prevPos, curPos) / this.speed * 1000;
+            tween.to({ isoX: curPos.x, isoY: curPos.y }, Math.round(timeForMove), "Linear", false);
+
+            prevPos = curPos;
+        }
+        tween.onComplete.add(() => {
+            this.isWalking = false;
+            this.onCell = cell;
+            this.walkAnimation.stop(true);
+            console.log("Movement done!");
+        }, this);
+        tween.start();
+        this.lastWalkTween = tween;
+        return true;
+    }
+}
+
+class DrawableObject {
+    static spriteSize = 32;
+    sprite: Phaser.Plugin.Isometric.IsoSprite;
+
+    constructor(x: number, y: number, textureName: string, isoGroup: Phaser.Group, isRelativeCoords = false, tileSet = "tileset") {
+        var targetX, targetY;
+        if (isRelativeCoords) {
+            targetX = x * DrawableObject.spriteSize;
+            targetY = y * DrawableObject.spriteSize;
+        } else {
+            targetX = x;
+            targetY = y;
+        }
+        
+        this.sprite = <Phaser.Plugin.Isometric.IsoSprite>SimpleGame.iso.addIsoSprite(targetX, targetY, 0, tileSet, textureName, isoGroup);
+        this.sprite.anchor.set(0.5, 0);
+    }
+
+    getScreenPos() : Phaser.Point {
+        return new Phaser.Point(this.sprite.isoX, this.sprite.isoY);
+    }
+
+    moveToCell(cell: MapCell) {
+        var cellPos = cell.drawable.getScreenPos();
+        this.sprite.isoX = cellPos.x;
+        this.sprite.isoY = cellPos.y;
+    }
+
+    isIntersects(x: number, y: number) : boolean {
+        return this.sprite.isoBounds.containsXY(x, y);
+    }
+}
+
+class MapCell {
+    pos: Phaser.Point;
+    drawable: DrawableObject;
+    isWall: boolean;
+
+    constructor(x: number, y: number, isWall: boolean, textureName: string, isoGroup: Phaser.Group) {
+        this.isWall = isWall;
+        this.pos = new Phaser.Point(x, y);
+
+        this.drawable = new DrawableObject(x, y, textureName, isoGroup, true);
+    }
+}
+
+class Map {
+    private tileIndexes: number[][];
+    private weightMap: number[][];
+    private cells: MapCell[][];
+    tileNamesArray: string[];
+
+    width: number;
+    height: number;
+
+    constructor(tileIndexes: number[][]) {
+        this.tileIndexes = tileIndexes;
+        this.width = tileIndexes.length;
+        this.height = tileIndexes[0].length;
+
+        this.tileNamesArray= [];
+        this.tileNamesArray[0] = 'water';
+        this.tileNamesArray[1] = 'sand';
+        this.tileNamesArray[2] = 'grass';
+        this.tileNamesArray[3] = 'stone';
+        this.tileNamesArray[4] = 'wood';
+        this.tileNamesArray[5] = 'watersand';
+        this.tileNamesArray[6] = 'grasssand';
+        this.tileNamesArray[7] = 'sandstone';
+        this.tileNamesArray[8] = 'wall';
+        this.tileNamesArray[9] = 'window';
+        this.tileNamesArray[10] = 'bush1';
+        this.tileNamesArray[11] = 'bush2';
+        this.tileNamesArray[12] = 'mushroom';
+        this.tileNamesArray[13] = 'crab';
+    }
+
+    cellAt(x: number, y: number): MapCell {
+        if (x >= this.width || x < 0 || y >= this.height || y < 0) {
+            return null;
+        }
+        return this.cells[x][y];
+    }
+
+    getPathToCell(fromCell: MapCell, toCell: MapCell): astar.AStarData[] {
+        return astar.AStar.search(this.weightMap, fromCell.pos, toCell.pos, [], true);
+    }
+
+    getPathToCellFromPoint(fromScreenPoint: Phaser.Point, toCell: MapCell): astar.AStarData[] {
+        var cellAtPoint = this.cellsAtScreenCoords(fromScreenPoint.x, fromScreenPoint.y);
+        if (cellAtPoint) return this.getPathToCell(cellAtPoint, toCell);
+        return [];
+    }
+
+    cellsAtScreenCoords(x: number, y: number, colorize = false): MapCell {
+        var size = DrawableObject.spriteSize;
+        var posX = Math.floor(x / size);
+        var posY = Math.floor(y / size);
+        return this.cellAt(posX, posY);
+
+        //// colorize hovered cells
+        //if (colorize) {
+        //    if (inBounds) {
+        //        cell.drawable.sprite.tint = 0xff0000;
+        //    } else {
+        //        cell.drawable.sprite.tint = 0xffffff;
+        //    }
+        //}
+    }
+
+    drawMap() {
+        this.weightMap = new Array(this.width);
+        var isWall: boolean;
+
+        this.cells = new Array(this.width);
+        for (var i = 0; i < this.width; i++) {
+
+            this.cells[i] = new Array(this.height);
+            this.weightMap[i] = new Array(this.height);
+
+            for (var j = 0; j < this.height; j++) {
+                var tileIndex = this.tileIndexes[i][j];
+
+                isWall = tileIndex === 0;
+                var tile = new MapCell(i, j, isWall, this.tileNamesArray[tileIndex], SimpleGame.scene.isoGroup);
+                if (tileIndex === 8 || tileIndex === 9) SimpleGame.scene.sortGroup.add(tile.drawable.sprite);
+
+                this.weightMap[i][j] = isWall ? 0 : 1;
+                this.cells[i][j] = tile;
+            }
+        }
     }
 }
