@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "module": "amd",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outFile": "built/deloris.js",
+        "sourceMap": true
+    },
+    "files": [
+        "src/test.ts"
+    ]
+}
