@@ -6,8 +6,5 @@
         "preserveConstEnums": true,
         "outFile": "built/deloris.js",
         "sourceMap": true
-    },
-    "files": [
-        "src/test.ts"
-    ]
+    }
 }
